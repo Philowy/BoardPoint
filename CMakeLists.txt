@@ -17,6 +17,8 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(SFML)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 add_executable(BoardPoint WIN32 main.cpp
         classes/Test.cpp
         classes/Test.hpp
