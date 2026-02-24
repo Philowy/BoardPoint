@@ -20,11 +20,14 @@ FetchContent_MakeAvailable(SFML)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_executable(BoardPoint WIN32 main.cpp
-        classes/Test.cpp
-        classes/Test.hpp
-        Sceneries/Menu.cpp
-        Sceneries/Menu.hpp
-        Enums.hpp)
+#add_executable(BoardPoint main.cpp
+        Sceneries/MenuScene.hpp
+        Sceneries/Scene.hpp
+        Sceneries/MenuScene.cpp
+        Sceneries/AppScene.cpp
+        Sceneries/AppScene.hpp
+        Classes/ClassText.cpp
+        Classes/ClassText.hpp)
 
 target_link_libraries(BoardPoint PRIVATE SFML::Graphics)
 

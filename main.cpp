@@ -1,47 +1,47 @@
 #include <SFML/Graphics.hpp>
+#include <memory>
+#include <optional>
 
-#include "Classes/Test.hpp"
+#include "Classes/ClassText.hpp"
 
-#include "Enums.hpp"
-
-#include "Sceneries/Menu.hpp"
-/*#include "Sceneries/PreGame.hpp"
-#include "Sceneries/Game.hpp"
-#include "Sceneries/Settings.hpp"
-#include "Sceneries/Author.hpp"*/
+#include "Sceneries/Scene.hpp"
+#include "Sceneries/MenuScene.hpp"
+#include "Sceneries/AppScene.hpp"
 
 auto main() -> int {
-    auto window = sf::RenderWindow(
-        sf::VideoMode({800,600}),
-        "BoardPoint",
-        sf::Style::Default,
-        sf::State::Windowed,
-        sf::ContextSettings{.antiAliasingLevel = 8}
-    );
+    ClassText::initialize();
+    sf::RenderWindow window(sf::VideoMode({1200, 800}), "BoardPoint - std::unique_ptr");
 
-    auto windowState = MENU;
+    std::unique_ptr<Scene> currentScene = std::make_unique<MenuScene>();
+
 
     while (window.isOpen()) {
-        while (const std::optional<sf::Event> event = window.pollEvent()) {
-            if (event->is<sf::Event::Closed>())
+        while (const std::optional event = window.pollEvent()) {
+            if (event->is<sf::Event::Closed>()) {
                 window.close();
-
-            switch (windowState) {
-                case 0: menuEvent(event, windowState, window); break;
-                //case 1: settingsEvent(event, windowState, window); break;
             }
 
-            // gives different lighting when the mouse hovers
-            //Button::backlightArea(sf::Mouse::getPosition(window));
+            currentScene->handleEvent(*event, window);
         }
 
-        switch (windowState) {
-            case 0: menuMain(window); break;
-            //case 1: settingsMain(window); break;
+        //
+        // odpowiedź ze sceny
+        SceneRequest request = currentScene->update();
+
+        switch (request) {
+            case SceneRequest::APP:
+                currentScene = std::make_unique<AppScene>();
+                break;
+
+            case SceneRequest::MENU:
+                currentScene = std::make_unique<MenuScene>();
+                break;
         }
 
+        window.clear();
+
+        currentScene->draw(window);
         window.display();
     }
-
     return 0;
 }
