@@ -1,11 +1,13 @@
 #include "ClassText.hpp"
-#include <iostream>
 
 ClassText::ClassText(std::string text, int size) : Text(font, text, size) {
     this->setFillColor(sf::Color::White);
+}
 
+ClassText::ClassText(std::string text, int size, bool centered) : Text(font, text, size) {
+    this->setFillColor(sf::Color::White);
 
-    centerOrigin();
+    if (centered) centerOrigin();
 }
 
 void ClassText::centerOrigin() {

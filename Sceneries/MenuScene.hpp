@@ -12,6 +12,6 @@ private:
 public:
     MenuScene();
     void handleEvent(const sf::Event& event, sf::RenderWindow& window) override;
-    SceneRequest update() override;
+    SceneENUM update() override;
     void draw(sf::RenderWindow& window) override;
 };

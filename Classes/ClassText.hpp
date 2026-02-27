@@ -8,10 +8,11 @@ class ClassText : public sf::Text{
         void centerOrigin();
 
         ClassText(std::string text, int size);
+        ClassText(std::string text, int size, bool centered);
 
         static void initialize() {
             if (!font.openFromFile("Fonts/OpenSans-VariableFont_wdth,wght.ttf")) {
-                exit(1);
+                exit(69);
             }
             font = sf::Font("Fonts/OpenSans-VariableFont_wdth,wght.ttf");
         }

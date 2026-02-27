@@ -27,7 +27,12 @@ add_executable(BoardPoint WIN32 main.cpp
         Sceneries/AppScene.cpp
         Sceneries/AppScene.hpp
         Classes/ClassText.cpp
-        Classes/ClassText.hpp)
+        Classes/ClassText.hpp
+        Classes/LeftPanel/LeftPanel.cpp
+        Classes/LeftPanel/LeftPanel.hpp
+        Classes/LeftPanel/ListItem.cpp
+        Classes/LeftPanel/ListItem.hpp
+        windowSizeClass.hpp)
 
 target_link_libraries(BoardPoint PRIVATE SFML::Graphics)
 

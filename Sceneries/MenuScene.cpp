@@ -2,10 +2,12 @@
 
 MenuScene::MenuScene() {
 
-    teksty.emplace_back("Menu", 81);
+    teksty.emplace_back("Menu", 81, true);
+    teksty[0].centerOrigin();
     teksty[0].setPosition({600, 200});
 
-    teksty.emplace_back("Start", 72);
+    teksty.emplace_back("Start", 72, true);
+    teksty[1].centerOrigin();
     teksty[1].setPosition({600, 400});
 
     // zielony guzik na środku
@@ -26,11 +28,11 @@ void MenuScene::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
     }
 }
 
-SceneRequest MenuScene::update() {
+SceneENUM MenuScene::update() {
     if (wantsToStart) {
-        return SceneRequest::APP;
+        return SceneENUM::APP;
     }
-    return SceneRequest::NONE;
+    return SceneENUM::NONE;
 }
 
 void MenuScene::draw(sf::RenderWindow& window) {
