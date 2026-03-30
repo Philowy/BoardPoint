@@ -12,11 +12,12 @@
 auto main() -> int {
     ClassText::initialize();
 
+    // get native resolution of your screen
+    sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
     sf::RenderWindow window(sf::VideoMode(
-        {1200, 800}),
+        desktopMode),
         "BoardPoint - std::unique_ptr",
-        sf::Style::Default,
-        sf::State::Fullscreen
+        sf::Style::None
         );
 
     window.setFramerateLimit(60);
