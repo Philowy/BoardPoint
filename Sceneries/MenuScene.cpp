@@ -4,16 +4,17 @@ MenuScene::MenuScene() {
 
     teksty.emplace_back("Menu", 81, true);
     teksty[0].centerOrigin();
-    teksty[0].setPosition({600, 200});
+    teksty[0].setPosition({windowSizeClass::windowSize.x/2.f, windowSizeClass::windowSize.y/3.f});
 
     teksty.emplace_back("Start", 72, true);
     teksty[1].centerOrigin();
-    teksty[1].setPosition({600, 400});
+    teksty[1].setPosition({windowSizeClass::windowSize.x/2.f, windowSizeClass::windowSize.y/2.f});
 
-    // zielony guzik na środku
+    // green button in the center
     startButton.setSize({200.f, 80.f});
     startButton.setFillColor(sf::Color::Green);
-    startButton.setPosition({500.f, 360.f});
+    startButton.setOrigin({startButton.getSize().x/2.f, startButton.getSize().y/2.f});
+    startButton.setPosition({windowSizeClass::windowSize.x/2.f, windowSizeClass::windowSize.y/2.f});
 }
 
 void MenuScene::handleEvent(const sf::Event& event, sf::RenderWindow& window) {

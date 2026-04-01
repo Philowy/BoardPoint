@@ -1,6 +1,7 @@
 #pragma once
 #include "Scene.hpp"
 #include "../Classes/ClassText.hpp"
+#include "../windowSizeClass.hpp"
 
 class MenuScene : public Scene {
 private:

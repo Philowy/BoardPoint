@@ -4,7 +4,7 @@
 ListItem::ListItem(std::string textStr, int lettersSize, sf::Vector2f size) : text(textStr, lettersSize) {
     total += 1;
     rawText = textStr;
-    baseTextSize = lettersSize; // ZAPISUJEMY rozmiar na przyszłość!
+    baseTextSize = lettersSize;
     box.setFillColor(sf::Color(0, 0, 0, 0));
     setSize(size);
 }
@@ -33,6 +33,20 @@ void ListItem::setBackgroundColor(sf::Color color) {
     box.setFillColor(color);
 }
 
+void ListItem::setState(State state) {
+    switch (state) {
+        case State::Default:
+            box.setFillColor(sf::Color(0, 0, 0, 0));
+            break;
+        case State::Hovered:
+            box.setFillColor(sf::Color(0, 0, 40, 50));
+            break;
+        case State::Selected:
+            box.setFillColor(sf::Color(80, 80, 80, 200));
+            break;
+    }
+}
+
 void ListItem::setSize(sf::Vector2f size) {
     currentMaxWidth = size.x;
     currentMinHeight = size.y;
@@ -58,7 +72,7 @@ void ListItem::wrapText() {
             continue;
         }
 
-        // safety check if a single word without spaces is longer than the panel
+        // check if a single word without spaces is longer than the panel
         this->text.setString(currentWord + c);
         if (this->text.getLocalBounds().size.x > currentMaxWidth - 10.f) {
             if (!currentLine.empty()) {

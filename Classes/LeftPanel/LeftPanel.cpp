@@ -3,18 +3,17 @@
 
 LeftPanel::LeftPanel() : toDoList("TO DO LIST", windowSizeClass::getY() / 17.f, true) {
     background.setFillColor(sf::Color(50, 50, 50));
-    pointedlistItem.setFillColor(sf::Color(0, 0, 40, 50));
 
-    // temporary data
-    items.push_back({"Powitanie", sizeOfTextInList, pointedlistItem.getSize()});
-    items.push_back({"Przedstawienie planu", sizeOfTextInList, pointedlistItem.getSize()});
-    items.push_back({"Punkt A", sizeOfTextInList, pointedlistItem.getSize()});
-    items.push_back({"Punkt B", sizeOfTextInList, pointedlistItem.getSize()});
+    // temporary data (passing dummy size, will be overwritten in updateViewSize)
+    items.push_back({"Powitanie", sizeOfTextInList, {0.f, 0.f}});
+    items.push_back({"Przedstawienie planu", sizeOfTextInList, {0.f, 0.f}});
+    items.push_back({"Punkt A", sizeOfTextInList, {0.f, 0.f}});
+    items.push_back({"Punkt B", sizeOfTextInList, {0.f, 0.f}});
 
     updateViewSize();
 }
 
-void LeftPanel::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
+void LeftPanel::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
     // mouse pressed
     if (const auto* press = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (press->button == sf::Mouse::Button::Left) {
@@ -87,13 +86,13 @@ void LeftPanel::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
         }
         else if (key->code == sf::Keyboard::Key::Enter) {
             // add new point
-            items.insert(items.begin() + activeIndex + 1, {"", sizeOfTextInList, pointedlistItem.getSize()});
+            items.insert(items.begin() + activeIndex + 1, {"", sizeOfTextInList, {0.f, 0.f}});
             activeIndex++;
             updateViewSize();
         }
         else if (key->code == sf::Keyboard::Key::Tab) {
             // toggle subpoint
-            items[activeIndex].toggleSubpoint(); // <-- Używamy nowej funkcji!
+            items[activeIndex].toggleSubpoint();
             updateViewSize();
         }
         else if (key->code == sf::Keyboard::Key::Backspace) {
@@ -118,35 +117,33 @@ void LeftPanel::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
 }
 
 void LeftPanel::draw(sf::RenderWindow& window) {
+    int itemHorizontalMargins = windowSizeClass::getX() / 1920 * 15.f;
+    int itemHorizontalMarginsButSubpoint = windowSizeClass::getX() / 1920 * 45.f;
+
     window.setView(view);
 
     // static elements
     window.draw(background);
     window.draw(toDoList);
 
-    // cursor for stacking items
+    // for which height items start
     float currentY = windowSizeClass::getY() / 8.f;
 
     for (size_t i = 0; i < items.size(); ++i) {
-        float posX = items[i].isSubpoint ? 40.f : 10.f;
+        float posX = items[i].isSubpoint ? itemHorizontalMarginsButSubpoint : itemHorizontalMargins;
 
         items[i].setPosition({posX, currentY});
 
-        // active highlight
+        // Set state
         if (i == activeIndex) {
-            items[i].setBackgroundColor(sf::Color(80, 80, 80, 200));
+            items[i].setState(ListItem::State::Selected);
+        } else if (i == pointedIndex) {
+            items[i].setState(ListItem::State::Hovered);
         } else {
-            items[i].setBackgroundColor(sf::Color(0, 0, 0, 0));
+            items[i].setState(ListItem::State::Default);
         }
 
         items[i].draw(window);
-
-        // hover highlight
-        if (i == pointedIndex && i != activeIndex) {
-            pointedlistItem.setSize(items[i].getGlobalBounds().size);
-            pointedlistItem.setPosition({10.f, currentY});
-            window.draw(pointedlistItem);
-        }
 
         // move cursor down
         currentY += items[i].getGlobalBounds().size.y + 5.f;
@@ -171,9 +168,6 @@ void LeftPanel::updateViewSize() {
     // update background and title
     background.setSize({winX * splitRatio, winY});
     toDoList.setPosition({(winX * splitRatio) / 2.f, winY / 16.f});
-
-    // update hover box
-    pointedlistItem.setSize({(winX * splitRatio) / 1.05f, winY / 20.f});
 
     // update splitter
     splitter.setSize({6.f, winY});

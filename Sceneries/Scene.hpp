@@ -1,7 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
-// Lista dostępnych scen
+// List of available scene
 enum class SceneENUM {
     NONE, // stay in current scene / do nothing
     MENU,
@@ -10,7 +10,7 @@ enum class SceneENUM {
 
 class Scene {
 public:
-    //destruktor
+    // destruktor
     virtual ~Scene() = default;
 
     virtual void handleEvent(const sf::Event& event, sf::RenderWindow& window) = 0;
@@ -18,5 +18,4 @@ public:
     virtual SceneENUM update() = 0;
 
     virtual void draw(sf::RenderWindow& window) = 0;
-
 };

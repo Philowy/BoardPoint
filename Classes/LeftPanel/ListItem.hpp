@@ -1,9 +1,11 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "../ClassText.hpp"
-#include "../../windowSizeClass.hpp"
 
 class ListItem {
+public:
+    enum class State { Default, Hovered, Selected };
+
 private:
     static inline int total;
 
@@ -26,6 +28,7 @@ public:
     void addCharacter(char c);
     void removeLastCharacter();
     void setBackgroundColor(sf::Color color);
+    void setState(State state);
 
     ListItem(std::string text, int lettersSize,  sf::Vector2f size);
     ~ListItem();

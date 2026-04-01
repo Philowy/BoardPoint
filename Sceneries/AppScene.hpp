@@ -9,7 +9,7 @@ private:
     LeftPanel leftPanel;
 
     sf::RectangleShape startButton;
-    bool wantsToReturn = false; // Flaga, czy kliknięto przycisk
+    bool wantsToReturn = false; // Flag, if button pressed
     std::vector<ClassText> teksty;
 
 public:

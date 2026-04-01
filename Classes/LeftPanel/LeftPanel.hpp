@@ -20,15 +20,12 @@ private:
 
     std::vector<ListItem> items;
 
-    size_t pointedIndex = 0;
+    size_t pointedIndex = -1;
     size_t activeIndex = 0;
-
-    bool ifMouseOnPoints = false;
-    sf::RectangleShape pointedlistItem;
 
 public:
     LeftPanel();
-    void handleEvent(const sf::Event& event, sf::RenderWindow& window);
+    void handleEvent(const sf::Event& event, const sf::RenderWindow& window);
     void draw(sf::RenderWindow& window);
 
     void updateViewSize();
