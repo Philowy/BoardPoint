@@ -12,6 +12,13 @@ private:
     bool ifMainPoint;
     ClassText text;
 
+    std::string rawText;
+    float currentMaxWidth = 0.f;
+    float currentMinHeight = 0.f;
+    int baseTextSize;
+
+    void wrapText();
+
 public:
     bool isSubpoint = false;
 
@@ -25,6 +32,7 @@ public:
 
     void setPosition(sf::Vector2f pos);
     sf::FloatRect getGlobalBounds() const;
-    void updateTextPosition();
     void draw(sf::RenderWindow& window) const;
+    void setSize(sf::Vector2f size);
+    void toggleSubpoint();
 };

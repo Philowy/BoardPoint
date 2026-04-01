@@ -1,8 +1,7 @@
 #include "LeftPanel.hpp"
-#include <algorithm> // std::clamp
+#include <algorithm>
 
 LeftPanel::LeftPanel() : toDoList("TO DO LIST", windowSizeClass::getY() / 17.f, true) {
-    updateViewSize();
     background.setFillColor(sf::Color(50, 50, 50));
     pointedlistItem.setFillColor(sf::Color(0, 0, 40, 50));
 
@@ -11,23 +10,21 @@ LeftPanel::LeftPanel() : toDoList("TO DO LIST", windowSizeClass::getY() / 17.f, 
     items.push_back({"Przedstawienie planu", sizeOfTextInList, pointedlistItem.getSize()});
     items.push_back({"Punkt A", sizeOfTextInList, pointedlistItem.getSize()});
     items.push_back({"Punkt B", sizeOfTextInList, pointedlistItem.getSize()});
+
+    updateViewSize();
 }
 
 void LeftPanel::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
-
-    // ==========================================
-    // MOUSE PRESSED
-    // ==========================================
+    // mouse pressed
     if (const auto* press = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (press->button == sf::Mouse::Button::Left) {
-
-            // check splitter (global coordinates)
+            // check splitter
             sf::Vector2f mPosGlobal = window.mapPixelToCoords(press->position, window.getDefaultView());
             if (splitter.getGlobalBounds().contains(mPosGlobal)) {
                 isDraggingSplitter = true;
-                splitter.setFillColor(sf::Color(150, 150, 150)); // Brighten when dragging
+                splitter.setFillColor(sf::Color(150, 150, 150));
             }
-            // check items (LPanel coordinates)
+            // check items
             else {
                 sf::Vector2f mPosLocal = window.mapPixelToCoords(press->position, view);
                 for (size_t i = 0; i < items.size(); ++i) {
@@ -39,33 +36,26 @@ void LeftPanel::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
             }
         }
     }
-
-    // ==========================================
-    // MOUSE RELEASED
-    // ==========================================
+    // mouse released
     else if (const auto* release = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (release->button == sf::Mouse::Button::Left) {
             isDraggingSplitter = false;
-            splitter.setFillColor(sf::Color(80, 80, 80)); // back to normal color
+            splitter.setFillColor(sf::Color(80, 80, 80));
         }
     }
-
-    // ==========================================
-    // MOUSE MOVED (Dragging & Hovering)
-    // ==========================================
+    // mouse moved
     else if (const auto* move = event.getIf<sf::Event::MouseMoved>()) {
-
-        // dragging the splitter
+        // dragging splitter
         if (isDraggingSplitter) {
             float newRatio = static_cast<float>(move->position.x) / windowSizeClass::getX();
-            newRatio = std::clamp(newRatio, 0.1f, 0.5f); // limit between 10% and 50%
+            newRatio = std::clamp(newRatio, 0.1f, 0.5f);
 
             if (splitRatio != newRatio) {
                 splitRatio = newRatio;
                 updateViewSize();
             }
         }
-        // hovering (Splitter and Items)
+        // hovering
         else {
             // splitter hover
             sf::Vector2f mPosGlobal = window.mapPixelToCoords(move->position, window.getDefaultView());
@@ -75,22 +65,19 @@ void LeftPanel::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
                 splitter.setFillColor(sf::Color(80, 80, 80));
             }
 
-            // items hover (Pointed Index)
+            // items hover
             sf::Vector2f mPosLocal = window.mapPixelToCoords(move->position, view);
-            pointedIndex = -1; // reset pointed index
+            pointedIndex = -1;
 
             for (size_t i = 0; i < items.size(); ++i) {
                 if (items[i].getGlobalBounds().contains(mPosLocal)) {
-                    pointedIndex = i; // set newly hovered item
+                    pointedIndex = i;
                     break;
                 }
             }
         }
     }
-
-    // ==========================================
-    // KEYBOARD NAVIGATION
-    // ==========================================
+    // keyboard navigation
     else if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
         if (key->code == sf::Keyboard::Key::Up) {
             if (activeIndex > 0) activeIndex--;
@@ -99,31 +86,30 @@ void LeftPanel::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
             if (activeIndex < items.size() - 1) activeIndex++;
         }
         else if (key->code == sf::Keyboard::Key::Enter) {
-            // add new empty point below active
+            // add new point
             items.insert(items.begin() + activeIndex + 1, {"", sizeOfTextInList, pointedlistItem.getSize()});
             activeIndex++;
+            updateViewSize();
         }
         else if (key->code == sf::Keyboard::Key::Tab) {
-            // toggle subpoint status
-            items[activeIndex].isSubpoint = !items[activeIndex].isSubpoint;
+            // toggle subpoint
+            items[activeIndex].toggleSubpoint(); // <-- Używamy nowej funkcji!
+            updateViewSize();
         }
         else if (key->code == sf::Keyboard::Key::Backspace) {
-            // delete active point if it's empty
+            // delete empty point
             if (items[activeIndex].getString().isEmpty() && items.size() > 1) {
                 items.erase(items.begin() + activeIndex);
                 if (activeIndex > 0) activeIndex--;
             }
         }
     }
-
-    // ==========================================
-    // TEXT EDITING
-    // ==========================================
+    // text editing
     else if (const auto* textEvent = event.getIf<sf::Event::TextEntered>()) {
         if (textEvent->unicode > 31 && textEvent->unicode < 127) {
             items[activeIndex].addCharacter(static_cast<char>(textEvent->unicode));
         }
-        else if (textEvent->unicode == 8) { // Backspace
+        else if (textEvent->unicode == 8) {
             if (!items[activeIndex].getString().isEmpty()) {
                 items[activeIndex].removeLastCharacter();
             }
@@ -134,22 +120,19 @@ void LeftPanel::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
 void LeftPanel::draw(sf::RenderWindow& window) {
     window.setView(view);
 
-    // static
+    // static elements
     window.draw(background);
     window.draw(toDoList);
 
-    // list items
-    float startY = windowSizeClass::getY() / 8.f;
+    // cursor for stacking items
+    float currentY = windowSizeClass::getY() / 8.f;
 
     for (size_t i = 0; i < items.size(); ++i) {
-        items[i].updateTextPosition();
+        float posX = items[i].isSubpoint ? 40.f : 10.f;
 
-        float posX = items[i].isSubpoint ? 40.f : 10.f; // Indent if subpoint
-        float posY = startY + (i * windowSizeClass::getY() / 17.f);
+        items[i].setPosition({posX, currentY});
 
-        items[i].setPosition({posX, posY});
-
-        // set active highlight color
+        // active highlight
         if (i == activeIndex) {
             items[i].setBackgroundColor(sf::Color(80, 80, 80, 200));
         } else {
@@ -158,11 +141,15 @@ void LeftPanel::draw(sf::RenderWindow& window) {
 
         items[i].draw(window);
 
-        // draw hover highlight
+        // hover highlight
         if (i == pointedIndex && i != activeIndex) {
-            pointedlistItem.setPosition({10.f, posY});
+            pointedlistItem.setSize(items[i].getGlobalBounds().size);
+            pointedlistItem.setPosition({10.f, currentY});
             window.draw(pointedlistItem);
         }
+
+        // move cursor down
+        currentY += items[i].getGlobalBounds().size.y + 5.f;
     }
 
     // splitter
@@ -174,21 +161,33 @@ void LeftPanel::updateViewSize() {
     float winX = windowSizeClass::getX();
     float winY = windowSizeClass::getY();
 
-    // update camera (pixels)
+    // update camera
     view.setSize({winX * splitRatio, winY});
     view.setCenter({(winX * splitRatio) / 2.f, winY / 2.f});
 
-    // update viewport (percentage)
+    // update viewport
     view.setViewport(sf::FloatRect({0.f, 0.f}, {splitRatio, 1.f}));
 
-    // update panel background & title
+    // update background and title
     background.setSize({winX * splitRatio, winY});
     toDoList.setPosition({(winX * splitRatio) / 2.f, winY / 16.f});
 
-    // update hover box width to match new panel width
+    // update hover box
     pointedlistItem.setSize({(winX * splitRatio) / 1.05f, winY / 20.f});
 
-    // update Splitter position
+    // update splitter
     splitter.setSize({6.f, winY});
     splitter.setPosition({winX * splitRatio - 2.f, 0.f});
+
+    // update items width
+    float panelWidth = winX * splitRatio;
+    float baseHeight = winY / 20.f;
+
+    for (auto& item : items) {
+        float itemWidth = panelWidth - 30.f;
+        if (item.isSubpoint) {
+            itemWidth -= 30.f;
+        }
+        item.setSize({itemWidth, baseHeight});
+    }
 }
