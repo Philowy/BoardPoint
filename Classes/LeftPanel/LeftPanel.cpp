@@ -7,9 +7,21 @@ LeftPanel::LeftPanel() : toDoList("TO DO LIST", windowSizeClass::getY() / 17.f, 
 
     // temporary data
     items.push_back({"Powitanie", sizeOfTextInList, {0.f, 0.f}});
+    items.push_back({"Podpunkt", sizeOfTextInList, {0.f, 0.f}});
+    items[1].toggleSubpoint();
     items.push_back({"Przedstawienie planu", sizeOfTextInList, {0.f, 0.f}});
     items.push_back({"Punkt A", sizeOfTextInList, {0.f, 0.f}});
+    items.push_back({"Podpunkt 1", sizeOfTextInList, {0.f, 0.f}});
+    items[4].toggleSubpoint();
+    items.push_back({"Podpunkt 2", sizeOfTextInList, {0.f, 0.f}});
+    items[5].toggleSubpoint();
+    items.push_back({"Podpunkt 3", sizeOfTextInList, {0.f, 0.f}});
+    items[6].toggleSubpoint();
     items.push_back({"Punkt B", sizeOfTextInList, {0.f, 0.f}});
+    items.push_back({"Podpunkt 1", sizeOfTextInList, {0.f, 0.f}});
+    items[8].toggleSubpoint();
+    items.push_back({"Podpunkt 2", sizeOfTextInList, {0.f, 0.f}});
+    items[9].toggleSubpoint();
 
     updateNumbers();
     updateViewSize();
