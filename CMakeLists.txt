@@ -19,7 +19,7 @@ FetchContent_MakeAvailable(SFML)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-add_executable(BoardPoint WIN32 main.cpp
+add_executable(BoardPoint WIN32 main.cpp resources.rc
 #add_executable(BoardPoint main.cpp
         Sceneries/MenuScene.hpp
         Sceneries/Scene.hpp

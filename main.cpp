@@ -20,6 +20,11 @@ auto main() -> int {
         sf::Style::None
         );
 
+    sf::Image icon;
+    if (icon.loadFromFile("icon.png")) {
+        window.setIcon({icon.getSize().x, icon.getSize().y}, icon.getPixelsPtr());
+    }
+
     window.setFramerateLimit(60);
 
     // here I just take window size to windowSizeClass
