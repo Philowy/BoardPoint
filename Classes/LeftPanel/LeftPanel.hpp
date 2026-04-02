@@ -20,8 +20,24 @@ private:
 
     std::vector<ListItem> items;
 
-    size_t pointedIndex = -1;
-    size_t activeIndex = 0;
+    int pointedIndex = -1;
+    int activeIndex = 0;
+
+    // --- DRAG AND DROP ---
+    bool isDraggingItem = false;
+    int mouseDownIndex = -1;
+    sf::Vector2f dragStartPos;
+    std::vector<ListItem> draggedItems;
+    int dropIndex = -1;
+    sf::Vector2f dragMousePos;
+
+    // --- SCROLLING ---
+    float scrollY = 0.f;
+    float maxScrollY = 0.f;
+    sf::RectangleShape scrollbar;
+
+    void updateNumbers();
+    void updateScroll();
 
 public:
     LeftPanel();

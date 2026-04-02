@@ -23,12 +23,14 @@ private:
 
 public:
     bool isSubpoint = false;
+    int listNumber = 0;
 
     sf::String getString();
     void addCharacter(char c);
     void removeLastCharacter();
     void setBackgroundColor(sf::Color color);
     void setState(State state);
+    void setListNumber(int num);
 
     ListItem(std::string text, int lettersSize,  sf::Vector2f size);
     ~ListItem();

@@ -1,16 +1,39 @@
 #include "LeftPanel.hpp"
 #include <algorithm>
+#include <cmath>
 
 LeftPanel::LeftPanel() : toDoList("TO DO LIST", windowSizeClass::getY() / 17.f, true) {
     background.setFillColor(sf::Color(50, 50, 50));
 
-    // temporary data (passing dummy size, will be overwritten in updateViewSize)
+    // temporary data
     items.push_back({"Powitanie", sizeOfTextInList, {0.f, 0.f}});
     items.push_back({"Przedstawienie planu", sizeOfTextInList, {0.f, 0.f}});
     items.push_back({"Punkt A", sizeOfTextInList, {0.f, 0.f}});
     items.push_back({"Punkt B", sizeOfTextInList, {0.f, 0.f}});
 
+    updateNumbers();
     updateViewSize();
+}
+
+void LeftPanel::updateNumbers() {
+    int num = 1;
+    for (auto& item : items) {
+        if (!item.isSubpoint) {
+            item.setListNumber(num++);
+        } else {
+            item.setListNumber(0);
+        }
+    }
+}
+
+void LeftPanel::updateScroll() {
+    float totalHeight = 0.f;
+    for (const auto& item : items) {
+        totalHeight += item.getGlobalBounds().size.y + 5.f;
+    }
+    float availHeight = windowSizeClass::getY() - windowSizeClass::getY() / 8.f;
+    maxScrollY = std::max(0.f, totalHeight - availHeight);
+    scrollY = std::clamp(scrollY, 0.f, maxScrollY);
 }
 
 void LeftPanel::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
@@ -29,6 +52,8 @@ void LeftPanel::handleEvent(const sf::Event& event, const sf::RenderWindow& wind
                 for (size_t i = 0; i < items.size(); ++i) {
                     if (items[i].getGlobalBounds().contains(mPosLocal)) {
                         activeIndex = i;
+                        mouseDownIndex = i;
+                        dragStartPos = mPosLocal;
                         break;
                     }
                 }
@@ -40,10 +65,26 @@ void LeftPanel::handleEvent(const sf::Event& event, const sf::RenderWindow& wind
         if (release->button == sf::Mouse::Button::Left) {
             isDraggingSplitter = false;
             splitter.setFillColor(sf::Color(80, 80, 80));
+
+            if (isDraggingItem) {
+                items.insert(items.begin() + dropIndex, draggedItems.begin(), draggedItems.end());
+                draggedItems.clear();
+                isDraggingItem = false;
+                activeIndex = dropIndex;
+                mouseDownIndex = -1;
+
+                updateNumbers();
+                updateViewSize();
+            } else {
+                mouseDownIndex = -1;
+            }
         }
     }
     // mouse moved
     else if (const auto* move = event.getIf<sf::Event::MouseMoved>()) {
+        sf::Vector2f mPosLocal = window.mapPixelToCoords(move->position, view);
+        sf::Vector2f mPosGlobal = window.mapPixelToCoords(move->position, window.getDefaultView());
+
         // dragging splitter
         if (isDraggingSplitter) {
             float newRatio = static_cast<float>(move->position.x) / windowSizeClass::getX();
@@ -54,20 +95,87 @@ void LeftPanel::handleEvent(const sf::Event& event, const sf::RenderWindow& wind
                 updateViewSize();
             }
         }
+
+        // drag and drop items
+        if (mouseDownIndex != -1 && !isDraggingItem && !isDraggingSplitter) {
+            float dist = std::sqrt(std::pow(mPosLocal.x - dragStartPos.x, 2) + std::pow(mPosLocal.y - dragStartPos.y, 2));
+            if (dist > 5.f) {
+                isDraggingItem = true;
+
+                int count = 1;
+                if (!items[mouseDownIndex].isSubpoint) {
+                    for (size_t i = mouseDownIndex + 1; i < items.size(); ++i) {
+                        if (items[i].isSubpoint) count++;
+                        else break;
+                    }
+                }
+
+                for (int i = 0; i < count; ++i) {
+                    draggedItems.push_back(items[mouseDownIndex]);
+                    items.erase(items.begin() + mouseDownIndex);
+                }
+
+                activeIndex = -1;
+            }
+        }
+
+        if (isDraggingItem) {
+            dragMousePos = mPosLocal;
+
+            // calculate drop index based on Y position
+            dropIndex = 0;
+            for (size_t i = 0; i < items.size(); ++i) {
+                float itemMidY = items[i].getGlobalBounds().position.y + items[i].getGlobalBounds().size.y / 2.f;
+                if (mPosLocal.y > itemMidY) {
+                    dropIndex = i + 1;
+                }
+            }
+
+            // constrain dropIndex
+            if (!draggedItems.empty()) {
+                if (draggedItems[0].isSubpoint) {
+                    // Podpunkty można przeciągać tylko w obrębie swojego punktu głównego
+                    int parentIdx = -1;
+                    // Znajdźmy punkt główny w ORYGINALNEJ liście przed usunięciem draggedItems.
+                    // Odtworzenie tego jest proste: punkt główny jest po prostu nad dawnym miejscem podpunktu.
+                    for (int i = std::min((int)items.size() - 1, mouseDownIndex - 1); i >= 0; --i) {
+                        if (!items[i].isSubpoint) {
+                            parentIdx = i;
+                            break;
+                        }
+                    }
+                    int nextMainIdx = items.size();
+                    for (int i = parentIdx + 1; i < items.size(); ++i) {
+                        if (!items[i].isSubpoint) {
+                            nextMainIdx = i;
+                            break;
+                        }
+                    }
+                    dropIndex = std::clamp(dropIndex, parentIdx + 1, nextMainIdx);
+                } else {
+                    // Punkt główny wraz ze swoimi podpunktami można przeciągnąć wszędzie,
+                    // byle nie Pomiędzy podpunkty należące do INNEGO punktu głównego.
+                    if (dropIndex > 0 && dropIndex < items.size()) {
+                        if (items[dropIndex].isSubpoint) {
+                            // Jeśli próbujemy zrzucić między podpunkty, musimy przesunąć dropIndex do końca tego bloku
+                            while (dropIndex < items.size() && items[dropIndex].isSubpoint) {
+                                dropIndex++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // hovering
-        else {
-            // splitter hover
-            sf::Vector2f mPosGlobal = window.mapPixelToCoords(move->position, window.getDefaultView());
+        if (!isDraggingItem && !isDraggingSplitter) {
             if (splitter.getGlobalBounds().contains(mPosGlobal)) {
                 splitter.setFillColor(sf::Color(110, 110, 110));
             } else {
                 splitter.setFillColor(sf::Color(80, 80, 80));
             }
 
-            // items hover
-            sf::Vector2f mPosLocal = window.mapPixelToCoords(move->position, view);
             pointedIndex = -1;
-
             for (size_t i = 0; i < items.size(); ++i) {
                 if (items[i].getGlobalBounds().contains(mPosLocal)) {
                     pointedIndex = i;
@@ -76,41 +184,56 @@ void LeftPanel::handleEvent(const sf::Event& event, const sf::RenderWindow& wind
             }
         }
     }
+    // scrolling
+    else if (const auto* scroll = event.getIf<sf::Event::MouseWheelScrolled>()) {
+        sf::Vector2f mPosGlobal = window.mapPixelToCoords(sf::Mouse::getPosition(window), window.getDefaultView());
+        if (mPosGlobal.x < windowSizeClass::getX() * splitRatio) {
+            scrollY -= scroll->delta * 30.f;
+            scrollY = std::clamp(scrollY, 0.f, maxScrollY);
+        }
+    }
     // keyboard navigation
     else if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
-        if (key->code == sf::Keyboard::Key::Up) {
-            if (activeIndex > 0) activeIndex--;
-        }
-        else if (key->code == sf::Keyboard::Key::Down) {
-            if (activeIndex < items.size() - 1) activeIndex++;
-        }
-        else if (key->code == sf::Keyboard::Key::Enter) {
-            // add new point
-            items.insert(items.begin() + activeIndex + 1, {"", sizeOfTextInList, {0.f, 0.f}});
-            activeIndex++;
-            updateViewSize();
-        }
-        else if (key->code == sf::Keyboard::Key::Tab) {
-            // toggle subpoint
-            items[activeIndex].toggleSubpoint();
-            updateViewSize();
-        }
-        else if (key->code == sf::Keyboard::Key::Backspace) {
-            // delete empty point
-            if (items[activeIndex].getString().isEmpty() && items.size() > 1) {
-                items.erase(items.begin() + activeIndex);
+        if (activeIndex != -1) {
+            if (key->code == sf::Keyboard::Key::Up) {
                 if (activeIndex > 0) activeIndex--;
+            }
+            else if (key->code == sf::Keyboard::Key::Down) {
+                if (activeIndex < (int)items.size() - 1) activeIndex++;
+            }
+            else if (key->code == sf::Keyboard::Key::Enter) {
+                items.insert(items.begin() + activeIndex + 1, {"", sizeOfTextInList, {0.f, 0.f}});
+                activeIndex++;
+                updateNumbers();
+                updateViewSize();
+            }
+            else if (key->code == sf::Keyboard::Key::Tab) {
+                items[activeIndex].toggleSubpoint();
+                updateNumbers();
+                updateViewSize();
+            }
+            else if (key->code == sf::Keyboard::Key::Backspace) {
+                if (items[activeIndex].getString().isEmpty() && items.size() > 1) {
+                    items.erase(items.begin() + activeIndex);
+                    if (activeIndex > 0) activeIndex--;
+                    updateNumbers();
+                    updateViewSize();
+                }
             }
         }
     }
     // text editing
     else if (const auto* textEvent = event.getIf<sf::Event::TextEntered>()) {
-        if (textEvent->unicode > 31 && textEvent->unicode < 127) {
-            items[activeIndex].addCharacter(static_cast<char>(textEvent->unicode));
-        }
-        else if (textEvent->unicode == 8) {
-            if (!items[activeIndex].getString().isEmpty()) {
-                items[activeIndex].removeLastCharacter();
+        if (activeIndex != -1) {
+            if (textEvent->unicode > 31 && textEvent->unicode < 127) {
+                items[activeIndex].addCharacter(static_cast<char>(textEvent->unicode));
+                updateScroll();
+            }
+            else if (textEvent->unicode == 8) {
+                if (!items[activeIndex].getString().isEmpty()) {
+                    items[activeIndex].removeLastCharacter();
+                    updateScroll();
+                }
             }
         }
     }
@@ -122,31 +245,79 @@ void LeftPanel::draw(sf::RenderWindow& window) {
 
     window.setView(view);
 
-    // static elements
+    // static background
     window.draw(background);
-    window.draw(toDoList);
 
-    // for which height items start
-    float currentY = windowSizeClass::getY() / 8.f;
+    float currentY = windowSizeClass::getY() / 8.f - scrollY;
 
-    for (size_t i = 0; i < items.size(); ++i) {
-        float posX = items[i].isSubpoint ? itemHorizontalMarginsButSubpoint : itemHorizontalMargins;
+    // placeholder for drag and drop
+    sf::RectangleShape placeholder;
+    placeholder.setFillColor(sf::Color(100, 100, 100, 100));
 
-        items[i].setPosition({posX, currentY});
+    for (size_t i = 0; i <= items.size(); ++i) {
+        // Draw placeholder
+        if (isDraggingItem && i == dropIndex) {
+            float phHeight = 0.f;
+            for (const auto& di : draggedItems) phHeight += di.getGlobalBounds().size.y + 5.f;
 
-        // Set state
-        if (i == activeIndex) {
-            items[i].setState(ListItem::State::Selected);
-        } else if (i == pointedIndex) {
-            items[i].setState(ListItem::State::Hovered);
-        } else {
-            items[i].setState(ListItem::State::Default);
+            placeholder.setSize({windowSizeClass::getX() * splitRatio - 30.f, phHeight - 5.f});
+            placeholder.setPosition({(float)itemHorizontalMargins, currentY});
+            window.draw(placeholder);
+
+            currentY += phHeight;
         }
 
-        items[i].draw(window);
+        if (i < items.size()) {
+            float posX = items[i].isSubpoint ? itemHorizontalMarginsButSubpoint : itemHorizontalMargins;
+            items[i].setPosition({posX, currentY});
 
-        // move cursor down
-        currentY += items[i].getGlobalBounds().size.y + 5.f;
+            if (i == activeIndex && !isDraggingItem) {
+                items[i].setState(ListItem::State::Selected);
+            } else if (i == pointedIndex && !isDraggingItem) {
+                items[i].setState(ListItem::State::Hovered);
+            } else {
+                items[i].setState(ListItem::State::Default);
+            }
+
+            items[i].draw(window);
+            currentY += items[i].getGlobalBounds().size.y + 5.f;
+        }
+    }
+
+    // draw dragged items floating at mouse pos
+    if (isDraggingItem && !draggedItems.empty()) {
+        float dY = dragMousePos.y - 10.f;
+        for (auto& di : draggedItems) {
+            float posX = di.isSubpoint ? itemHorizontalMarginsButSubpoint : itemHorizontalMargins;
+            di.setPosition({posX, dY});
+            di.setState(ListItem::State::Selected);
+            di.draw(window);
+            dY += di.getGlobalBounds().size.y + 5.f;
+        }
+    }
+
+    // Top masking panel
+    sf::RectangleShape topBg;
+    topBg.setSize({windowSizeClass::getX() * splitRatio, windowSizeClass::getY() / 8.f});
+    topBg.setFillColor(sf::Color(50, 50, 50));
+    window.draw(topBg);
+
+    window.draw(toDoList);
+
+    // scrollbar
+    if (maxScrollY > 0) {
+        float totalH = maxScrollY + (windowSizeClass::getY() - windowSizeClass::getY() / 8.f);
+        float scrollRatio = scrollY / maxScrollY;
+        float sbHeight = std::max(20.f, windowSizeClass::getY() * (windowSizeClass::getY() / totalH));
+
+        // ensure scrollbar doesn't overlap the top background
+        float topOffset = windowSizeClass::getY() / 8.f;
+        float availSbSpace = windowSizeClass::getY() - topOffset - sbHeight;
+
+        scrollbar.setSize({5.f, sbHeight});
+        scrollbar.setFillColor(sf::Color(100, 100, 100));
+        scrollbar.setPosition({windowSizeClass::getX() * splitRatio - 10.f, topOffset + availSbSpace * scrollRatio});
+        window.draw(scrollbar);
     }
 
     // splitter
@@ -184,4 +355,6 @@ void LeftPanel::updateViewSize() {
         }
         item.setSize({itemWidth, baseHeight});
     }
+
+    updateScroll();
 }

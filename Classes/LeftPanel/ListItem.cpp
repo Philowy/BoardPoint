@@ -47,6 +47,11 @@ void ListItem::setState(State state) {
     }
 }
 
+void ListItem::setListNumber(int num) {
+    listNumber = num;
+    wrapText();
+}
+
 void ListItem::setSize(sf::Vector2f size) {
     currentMaxWidth = size.x;
     currentMinHeight = size.y;
@@ -57,12 +62,17 @@ void ListItem::setSize(sf::Vector2f size) {
 void ListItem::wrapText() {
     if (currentMaxWidth <= 20.f) return;
 
+    std::string fullText = rawText;
+    if (!isSubpoint && listNumber > 0) {
+        fullText = std::to_string(listNumber) + ". " + rawText;
+    }
+
     std::string wrapped = "";
     std::string currentLine = "";
     std::string currentWord = "";
 
-    for (size_t i = 0; i < rawText.length(); ++i) {
-        char c = rawText[i];
+    for (size_t i = 0; i < fullText.length(); ++i) {
+        char c = fullText[i];
 
         // user pressed enter manually
         if (c == '\n') {
@@ -87,7 +97,7 @@ void ListItem::wrapText() {
         currentWord += c;
 
         // check line width when space is hit or text ends
-        if (c == ' ' || i == rawText.length() - 1) {
+        if (c == ' ' || i == fullText.length() - 1) {
             this->text.setString(currentLine + currentWord);
 
             // move whole word to new line if it exceeds max width
