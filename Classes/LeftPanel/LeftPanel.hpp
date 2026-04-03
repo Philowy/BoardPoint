@@ -11,11 +11,24 @@ private:
     sf::RectangleShape background;
     int sizeOfTextInList = (int)windowSizeClass::getY()/27;
 
-    // --- SPLITTER ---
-    float splitRatio = 0.3f;
-    bool isDraggingSplitter = false;
-    sf::RectangleShape splitter;
+    // --- PANEL DRAG AND RESIZE ---
+    sf::FloatRect panelRect;       // Represents the whole panel area in window coordinates
+    bool isDraggingPanel = false;
+    bool isResizingPanel = false;
+    sf::Vector2f panelDragOffset;  // Where user clicked relative to panel top-left
 
+    // --- EDGES FOR RESIZING ---
+    sf::RectangleShape rightResizeHandle;
+    sf::RectangleShape bottomResizeHandle;
+    sf::RectangleShape cornerResizeHandle;
+
+    // Resize states
+    bool isResizingRight = false;
+    bool isResizingBottom = false;
+    bool isResizingCorner = false;
+
+    // --- TOP BAR ---
+    sf::RectangleShape topBar;     // For dragging the panel
     ClassText toDoList;
 
     std::vector<ListItem> items;
@@ -38,6 +51,7 @@ private:
 
     void updateNumbers();
     void updateScroll();
+    void updateLayout();
 
 public:
     LeftPanel();

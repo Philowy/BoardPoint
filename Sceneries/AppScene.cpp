@@ -43,7 +43,9 @@ SceneENUM AppScene::update() {
 }
 
 void AppScene::draw(sf::RenderWindow& window) {
+    upperPanel.update();
     leftPanel.draw(window);
+    upperPanel.draw(window);
     window.setView(window.getDefaultView());
 
     window.draw(startButton);
